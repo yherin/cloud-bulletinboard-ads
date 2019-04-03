@@ -7,5 +7,6 @@ embedded_tomcat
 manifest-*
 *.log
 .settings/org.eclipse.wst.common.project.facet.*
+.idea
 npm-debug.log
 node_modules
