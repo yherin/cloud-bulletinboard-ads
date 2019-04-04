@@ -3,6 +3,8 @@ package com.sap.bulletinboard.ads.controllers;
 import com.sap.bulletinboard.ads.models.Advertisement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.annotation.RequestScope;
@@ -11,8 +13,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,7 +39,7 @@ public class AdvertisementController {
     }
 
     @GetMapping(ID)
-    public Advertisement advertisementById(@PathVariable("id") Long id) {
+    public Advertisement advertisementById(@PathVariable("id") final Long id) {
         Advertisement ad = advertisementMap.get(id);
         if (ad == null) {
             throw new NotFoundException("Not found.");
@@ -47,7 +47,28 @@ public class AdvertisementController {
         return advertisementMap.get(id);
     }
 
+    @PutMapping
+    public ResponseEntity put(UriComponentsBuilder uriComponentsBuilder){
+        LOGGER.warn("Put request without id not allowed");
+        UriComponents uriComponents = uriComponentsBuilder.path(PATH).build();
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).location(uriComponents.toUri()).allow(HttpMethod.POST, HttpMethod.GET, HttpMethod.DELETE ).build();
+    }
+
+    @PutMapping(ID)
+    @ResponseBody
+    public ResponseEntity<Advertisement> putById(@RequestBody final Advertisement advertisement, @PathVariable("id") final Long id, UriComponentsBuilder uriComponentsBuilder) throws NotFoundException{
+        boolean found = AdvertisementController.advertisementMap.containsKey(id);
+        UriComponents components = uriComponentsBuilder.path(PATH+ID).buildAndExpand(id);
+        if (found){
+            AdvertisementController.advertisementMap.put(id,advertisement);
+            return ResponseEntity.ok().location(components.toUri()).body(advertisement);
+        } else {
+            throw new NotFoundException("Not found.");
+        }
+    }
+
     @PostMapping
+    @ResponseBody
     public ResponseEntity<Advertisement> add(@RequestBody Advertisement advertisement, UriComponentsBuilder uriComponentsBuilder) throws URISyntaxException {
         LOGGER.info("Got post req", advertisement);
         final Long uid = Math.abs(random.nextLong());
@@ -59,11 +80,21 @@ public class AdvertisementController {
     }
 
     @DeleteMapping(DELETE)
-    public ResponseEntity<Collection<Advertisement>> delete(UriComponentsBuilder uriComponentsBuilder) throws URISyntaxException {
+    public ResponseEntity delete(UriComponentsBuilder uriComponentsBuilder) throws URISyntaxException {
         LOGGER.info("Got del req");
-        Collection<Advertisement> values = AdvertisementController.advertisementMap.values();
+        UriComponents uri = uriComponentsBuilder.path(DELETE).build();
         AdvertisementController.advertisementMap.clear();
-        return ResponseEntity.ok().body(values);
+        return ResponseEntity.noContent().location(uri.toUri()).build();
+    }
 
+    @DeleteMapping(DELETE+ID)
+    public ResponseEntity deleteById(@PathVariable("id") final Long id, UriComponentsBuilder uriComponentsBuilder){
+        Advertisement deleted = AdvertisementController.advertisementMap.remove(id);
+        UriComponents uri = uriComponentsBuilder.path(DELETE+ID).buildAndExpand(id);
+        if (deleted == null){
+            return ResponseEntity.notFound().location(uri.toUri()).build();
+        } else {
+            return ResponseEntity.noContent().location(uri.toUri()).build();
+        }
     }
 }
