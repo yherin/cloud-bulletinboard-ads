@@ -49,6 +49,7 @@ public class AdvertisementControllerTest {
     @Before
     public void setUp() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+        mockMvc.perform(buildDeleteRequest());
     }
 
     @Test
@@ -64,7 +65,6 @@ public class AdvertisementControllerTest {
 
     @Test
     public void readAll() throws Exception {
-        mockMvc.perform(buildDeleteRequest());
         mockMvc.perform(buildPostRequest("abc"));
         mockMvc.perform(buildPostRequest("efg"));
         mockMvc.perform(buildPostRequest("xyz"));
@@ -85,13 +85,16 @@ public class AdvertisementControllerTest {
 
     @Test
     public void readByIdNotFound() throws Exception {
-        mockMvc.perform(buildDeleteRequest());
         mockMvc.perform(buildGetRequest("1")).andExpect(status().isNotFound());
     }
 
     @Test
+    public void readByIdInvalid() throws Exception {
+        mockMvc.perform(buildGetRequest("-1")).andExpect(status().isBadRequest());
+    }
+
+    @Test
     public void readById() throws Exception {
-        mockMvc.perform(buildDeleteRequest());
         MvcResult postResult = mockMvc.perform(buildPostRequest(SOME_TITLE)).andExpect(status().isCreated()).andReturn();
         String loc =  postResult.getResponse().getHeader("Location");
         String id = loc.replace(AdvertisementController.PATH,"");

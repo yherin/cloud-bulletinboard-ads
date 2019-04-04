@@ -6,17 +6,20 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.validation.constraints.Min;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Validated
 @RequestScope
 @RestController
 @RequestMapping(path = AdvertisementController.PATH)
@@ -38,8 +41,10 @@ public class AdvertisementController {
         return advertisementMap.values();
     }
 
+
     @GetMapping(ID)
-    public Advertisement advertisementById(@PathVariable("id") final Long id) {
+    public Advertisement advertisementById(@PathVariable("id") @Min(0L) final Long id) throws Exception{
+        LOGGER.info("id: "+id);
         Advertisement ad = advertisementMap.get(id);
         if (ad == null) {
             throw new NotFoundException("Not found.");
