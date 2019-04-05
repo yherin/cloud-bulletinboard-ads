@@ -91,6 +91,8 @@ public class AdvertisementControllerTest {
     @Test
     public void readByIdInvalid() throws Exception {
         mockMvc.perform(buildGetRequest("-1")).andExpect(status().isBadRequest());
+        mockMvc.perform(buildGetRequest("")).andExpect(status().isBadRequest());
+        mockMvc.perform(buildGetRequest(" ")).andExpect(status().isBadRequest());
     }
 
     @Test

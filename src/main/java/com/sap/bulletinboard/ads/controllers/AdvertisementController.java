@@ -1,6 +1,8 @@
 package com.sap.bulletinboard.ads.controllers;
 
 import com.sap.bulletinboard.ads.models.Advertisement;
+import org.hibernate.validator.constraints.NotBlank;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
@@ -13,6 +15,7 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -29,7 +32,7 @@ public class AdvertisementController {
     static final String DELETE = "/delete";
     static final String ID = "/{id}";
 
-    private static final Map<Long, Advertisement> advertisementMap = new ConcurrentHashMap<>();
+    private static final Map<Integer, Advertisement> advertisementMap = new ConcurrentHashMap<>();
     private static final Random random = new Random();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdvertisementController.class);
@@ -43,7 +46,7 @@ public class AdvertisementController {
 
 
     @GetMapping(ID)
-    public Advertisement advertisementById(@PathVariable("id") @Min(0L) final Long id) throws Exception{
+    public Advertisement advertisementById(@PathVariable("id") @Min(0)  @NotNull  final Integer id) throws Exception{
         LOGGER.info("id: "+id);
         Advertisement ad = advertisementMap.get(id);
         if (ad == null) {
@@ -61,7 +64,7 @@ public class AdvertisementController {
 
     @PutMapping(ID)
     @ResponseBody
-    public ResponseEntity<Advertisement> putById(@RequestBody final Advertisement advertisement, @PathVariable("id") final Long id, UriComponentsBuilder uriComponentsBuilder) throws NotFoundException{
+    public ResponseEntity<Advertisement> putById(@RequestBody @NotNull @NotBlank @NotEmpty final Advertisement advertisement, @PathVariable("id") @NotNull @Min(0) final Integer id, UriComponentsBuilder uriComponentsBuilder) throws NotFoundException{
         boolean found = AdvertisementController.advertisementMap.containsKey(id);
         UriComponents components = uriComponentsBuilder.path(PATH+ID).buildAndExpand(id);
         if (found){
@@ -74,9 +77,9 @@ public class AdvertisementController {
 
     @PostMapping
     @ResponseBody
-    public ResponseEntity<Advertisement> add(@RequestBody Advertisement advertisement, UriComponentsBuilder uriComponentsBuilder) throws URISyntaxException {
+    public ResponseEntity<Advertisement> add(@RequestBody @NotNull Advertisement advertisement, UriComponentsBuilder uriComponentsBuilder) throws URISyntaxException {
         LOGGER.info("Got post req", advertisement);
-        final Long uid = Math.abs(random.nextLong());
+        final Integer uid = Math.abs(random.nextInt());
         advertisementMap.put(uid, advertisement);
         UriComponents uriComponents = uriComponentsBuilder.path(PATH + "/{id}").buildAndExpand(uid);
         return ResponseEntity.created(new URI(uriComponents.getPath())).body(advertisement);
@@ -93,7 +96,7 @@ public class AdvertisementController {
     }
 
     @DeleteMapping(DELETE+ID)
-    public ResponseEntity deleteById(@PathVariable("id") final Long id, UriComponentsBuilder uriComponentsBuilder){
+    public ResponseEntity deleteById(@PathVariable("id") final Integer id, UriComponentsBuilder uriComponentsBuilder){
         Advertisement deleted = AdvertisementController.advertisementMap.remove(id);
         UriComponents uri = uriComponentsBuilder.path(DELETE+ID).buildAndExpand(id);
         if (deleted == null){
