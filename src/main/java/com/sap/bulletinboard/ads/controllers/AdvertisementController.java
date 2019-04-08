@@ -46,7 +46,7 @@ public class AdvertisementController {
 
 
     @GetMapping(ID)
-    public Advertisement advertisementById(@PathVariable("id") @Min(0)  @NotNull  final Integer id) throws Exception{
+    public Advertisement advertisementById(@PathVariable("id") @Min(0)  @NotNull    final Integer id) throws Exception{
         LOGGER.info("id: "+id);
         Advertisement ad = advertisementMap.get(id);
         if (ad == null) {
