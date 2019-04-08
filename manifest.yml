@@ -1,0 +1,14 @@
+applications:
+  - name: bulletinboard-ads
+    instances: 1
+    memory: 1g
+    timeout: 360
+    path: target/bulletinboard-ads.war
+    buildpack: "https://github.com/cloudfoundry/java-buildpack.git"
+    random-route: true
+    env:
+      # Use the non-blocking /dev/urandom instead of the default to generate random numbers.
+      # This may help with slow startup times, especially when using Spring Boot.
+      JAVA_OPTS: -Djava.security.egd=file:///dev/./urandom
+    health-check-type: http
+    health-check-http-endpoint: /health
