@@ -1,8 +1,10 @@
 package com.sap.bulletinboard.ads.models;
 
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
-public interface AdvertiseRepository extends CrudRepository<Advertisement, Integer> {
+@Repository
+public interface AdvertisementRepository extends CrudRepository<Advertisement, Integer> {
 
 
 

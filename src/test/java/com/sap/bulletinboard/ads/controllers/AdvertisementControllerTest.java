@@ -76,9 +76,9 @@ public class AdvertisementControllerTest {
 
         String content = mvcResult.getResponse().getContentAsString();
 
-        assertTrue(content.contains("{\"title\":\"abc\"}") );
-        assertTrue(content.contains("{\"title\":\"efg\"}") );
-        assertTrue(content.contains("{\"title\":\"xyz\"}") );
+        assertTrue(content.contains("{\"title\":\"abc\",\"id\":") );
+        assertTrue(content.contains("{\"title\":\"efg\",\"id\":") );
+        assertTrue(content.contains("{\"title\":\"xyz\",\"id\":") );
 
         // TODO create new advertisement using POST, then retrieve all advertisements using GET
     }
@@ -104,7 +104,8 @@ public class AdvertisementControllerTest {
                 .andReturn();
         String content = getResult.getResponse().getContentAsString();
         LOGGER.info("Res: "+content);
-        assertEquals("{\"title\":\""+ SOME_TITLE+"\"}", content);
+        assertTrue(content.contains("\"title\":\"MyNewAdvertisement\","));
+        assertTrue(content.contains("\"id\":"));
 
 
     }

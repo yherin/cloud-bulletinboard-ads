@@ -31,9 +31,9 @@ public class AdvertisementController {
     static final String PATH = "/api/v1/ads";
     static final String DELETE = "/delete";
     static final String ID = "/{id}";
+    static final Random random = new Random();
 
     private static final Map<Integer, Advertisement> advertisementMap = new ConcurrentHashMap<>();
-    private static final Random random = new Random();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdvertisementController.class);
 
@@ -78,10 +78,10 @@ public class AdvertisementController {
     @PostMapping
     @ResponseBody
     public ResponseEntity<Advertisement> add(@RequestBody @NotNull Advertisement advertisement, UriComponentsBuilder uriComponentsBuilder) throws URISyntaxException {
-        LOGGER.info("Got post req", advertisement);
-        final Integer uid = Math.abs(random.nextInt());
-        advertisementMap.put(uid, advertisement);
-        UriComponents uriComponents = uriComponentsBuilder.path(PATH + "/{id}").buildAndExpand(uid);
+        LOGGER.info("Got post req", advertisement.toString());
+        advertisement.setId(random.nextInt());
+        advertisementMap.put(advertisement.getId(), advertisement);
+        UriComponents uriComponents = uriComponentsBuilder.path(PATH + "/{id}").buildAndExpand(advertisement.getId());
         return ResponseEntity.created(new URI(uriComponents.getPath())).body(advertisement);
 
 

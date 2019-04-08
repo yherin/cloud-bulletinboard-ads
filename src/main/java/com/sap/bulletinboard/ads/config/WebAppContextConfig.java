@@ -19,7 +19,6 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 public class WebAppContextConfig {
 
     @Bean
-    @Profile("cloud")
     public static PropertySourcesPlaceholderConfigurer placeholderConfigurer() {
         // make environment variables available for Spring's @Value annotation
         return new PropertySourcesPlaceholderConfigurer();
