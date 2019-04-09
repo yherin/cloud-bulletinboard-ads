@@ -33,7 +33,7 @@ public class AdvertisementController {
     private static final Logger LOGGER = LoggerFactory.getLogger(AdvertisementController.class);
 
     @Inject
-    public AdvertisementController(final AdvertisementRepository advertisementRepository) {
+    public AdvertisementController(AdvertisementRepository advertisementRepository) {
         this.advertisementRepository = advertisementRepository;
     }
 
