@@ -1,7 +1,7 @@
 applications:
   - name: bulletinboard-ads
     instances: 1
-    memory: 1g
+    memory: 750m
     timeout: 360
     path: target/bulletinboard-ads.war
     buildpack: "https://github.com/cloudfoundry/java-buildpack.git"
@@ -12,3 +12,5 @@ applications:
       JAVA_OPTS: -Djava.security.egd=file:///dev/./urandom
     health-check-type: http
     health-check-http-endpoint: /health
+    services:
+      - postgres-bulletinboard-ads

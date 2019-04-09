@@ -1,9 +1,14 @@
 package com.sap.bulletinboard.ads.controllers;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sap.bulletinboard.ads.models.Advertisement;
 import com.sap.bulletinboard.ads.models.AdvertisementRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +23,8 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Validated
 @RequestScope
@@ -28,7 +35,13 @@ public class AdvertisementController {
     static final String PATH = "/api/v1/ads";
     static final String DELETE = "/delete";
     static final String ID = "/{id}";
+    public static final String PATH_PAGES = PATH + "/pages/";
+    public static final int FIRST_PAGE_ID = 0;
+    // allows server side optimization e.g. via caching
+    public static final int DEFAULT_PAGE_SIZE = 20;
+
     private AdvertisementRepository advertisementRepository;
+
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdvertisementController.class);
 
@@ -38,8 +51,16 @@ public class AdvertisementController {
     }
 
     @GetMapping
-    public Iterable<Advertisement> advertisements() {
-        return advertisementRepository.findAll();
+    public ResponseEntity<AdvertisementList> advertisements() {
+        return advertisementsForPage(FIRST_PAGE_ID);
+    }
+
+    @GetMapping(path = PATH_PAGES)
+    public ResponseEntity<AdvertisementList> advertisementsForPage( @PathVariable("pageId") int pageId){
+        Page<Advertisement> page = advertisementRepository.findAll(new PageRequest(pageId, DEFAULT_PAGE_SIZE));
+        return new ResponseEntity<>(
+                new AdvertisementList(page.getContent()), buildLinkHeader(page, PATH_PAGES),HttpStatus.OK
+        );
     }
 
 
@@ -64,10 +85,11 @@ public class AdvertisementController {
     @PutMapping(ID)
     @ResponseBody
     public ResponseEntity<Advertisement> putById(@RequestBody @NotNull final Advertisement paramAd, @PathVariable("id") @NotNull @Min(0) final Integer id, UriComponentsBuilder uriComponentsBuilder) throws NotFoundException {
-
-
-        Advertisement foundAd = advertisementRepository.findOne(id);
         UriComponents components = uriComponentsBuilder.path(PATH + ID).buildAndExpand(id);
+        if (paramAd.getId() == null || !paramAd.getId().equals(id) ){
+            return ResponseEntity.badRequest().location(components.toUri()).body(paramAd);
+        }
+        Advertisement foundAd = advertisementRepository.findOne(id);
         if (foundAd != null) {
             foundAd.setTitle(paramAd.getTitle());
             advertisementRepository.save(foundAd);
@@ -109,4 +131,29 @@ public class AdvertisementController {
             return ResponseEntity.noContent().location(uri.toUri()).build();
         }
     }
+    public static class AdvertisementList {
+        @JsonProperty("value")
+        public List<Advertisement> advertisements = new ArrayList<>();
+
+        public AdvertisementList(Iterable<Advertisement> ads) {
+            ads.forEach(advertisements::add);
+        }
+    }
+    public static HttpHeaders buildLinkHeader(Page<?> page, String path) {
+        StringBuilder linkHeader = new StringBuilder();
+        if (page.hasPrevious()) {
+            int prevNumber = page.getNumber() - 1;
+            linkHeader.append("<").append(path).append(prevNumber).append(">; rel=\"previous\"");
+            if (!page.isLast())
+                linkHeader.append(", ");
+        }
+        if (page.hasNext()) {
+            int nextNumber = page.getNumber() + 1;
+            linkHeader.append("<").append(path).append(nextNumber).append(">; rel=\"next\"");
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.LINK, linkHeader.toString());
+        return headers;
+    }
+
 }

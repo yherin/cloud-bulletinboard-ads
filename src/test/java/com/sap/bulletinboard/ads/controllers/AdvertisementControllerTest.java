@@ -29,7 +29,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sap.bulletinboard.ads.config.WebAppContextConfig;
 import com.sap.bulletinboard.ads.models.Advertisement;
-import org.springframework.web.util.UriComponents;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { WebAppContextConfig.class })
@@ -76,11 +75,10 @@ public class AdvertisementControllerTest {
 
         String content = mvcResult.getResponse().getContentAsString();
 
-        assertTrue(content.contains("{\"title\":\"abc\",\"id\":") );
-        assertTrue(content.contains("{\"title\":\"efg\",\"id\":") );
-        assertTrue(content.contains("{\"title\":\"xyz\",\"id\":") );
+        assertTrue(content.contains("\"title\":\"abc\"") );
+        assertTrue(content.contains("\"title\":\"efg\"") );
+        assertTrue(content.contains("\"title\":\"xyz\"") );
 
-        // TODO create new advertisement using POST, then retrieve all advertisements using GET
     }
 
     @Test
@@ -110,9 +108,44 @@ public class AdvertisementControllerTest {
 
     }
 
+    @Test
+    public void putEmptyFails() throws Exception {
+        Advertisement ad = buildSampleAd("ASDF");
+        mockMvc.perform(buildPutRequest(ad,"99")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void putMismatchFails() throws Exception {
+        Advertisement ad = buildSampleAd("ASDF");
+        ad.setId(999);
+        mockMvc.perform(buildPutRequest(ad,"99")).andExpect(status().isBadRequest());
+    }
+
+
+
+    @Test
+    public void putById() throws Exception {
+        MvcResult res = mockMvc.perform(buildPostRequest(SOME_TITLE))
+                .andExpect(status().isCreated())
+                .andExpect(header().string(LOCATION, is(not(""))))
+                .andExpect(content().contentType(APPLICATION_JSON_UTF8))
+                .andExpect(jsonPath("$.title", is(SOME_TITLE))).andReturn(); // requires com.jayway.jsonpath:json-path
+        /*
+        Now we have an ad existing based on the CREATE test.
+         */
+        String loc = res.getResponse().getHeader(LOCATION);
+        String id = loc.replace(AdvertisementController.PATH+'/',"");
+        Advertisement ad = buildSampleAd("ASDF");
+        ad.setId(Integer.parseInt(id));
+        res = mockMvc.perform(buildPutRequest(ad,id)).andExpect(status().isOk()).andReturn();
+        String content = res.getResponse().getContentAsString();
+        assertTrue(content.contains("\"title\":\"ASDF\","));
+        assertTrue(content.contains("\"id\":"+id));
+
+    }
+
     private MockHttpServletRequestBuilder buildPostRequest(String adsTitle) throws Exception {
-        Advertisement advertisement = new Advertisement();
-        advertisement.setTitle(adsTitle);
+        Advertisement advertisement = buildSampleAd(adsTitle);
 
         // post the advertisement as a JSON entity in the request body
         return post(AdvertisementController.PATH).content(toJson(advertisement)).contentType(APPLICATION_JSON_UTF8);
@@ -130,6 +163,15 @@ public class AdvertisementControllerTest {
         return delete(AdvertisementController.PATH + AdvertisementController.DELETE);
     }
 
+    private MockHttpServletRequestBuilder buildPutRequest(Advertisement ad,String id) throws Exception {
+        if (id == null){
+            return put(AdvertisementController.PATH).content(toJson(ad)).contentType(APPLICATION_JSON_UTF8);
+        } else {
+            return put(AdvertisementController.PATH+AdvertisementController.ID, id).content(toJson(ad)).contentType(APPLICATION_JSON_UTF8);
+        }
+
+    }
+
     private String toJson(Object object) throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(object);
     }
@@ -143,4 +185,11 @@ public class AdvertisementControllerTest {
         String contentString = response.getContentAsString();
         return objectMapper.readValue(contentString, clazz);
     }
+
+    private Advertisement buildSampleAd(String asdf) {
+        Advertisement ad = new Advertisement();
+        ad.setTitle(asdf);
+        return ad;
+    }
+
 }
